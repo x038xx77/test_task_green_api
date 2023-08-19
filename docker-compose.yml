@@ -1,0 +1,55 @@
+version: '3.7'
+services:
+  
+
+  rabbitmq:
+    
+    image: rabbitmq:3.9-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - loki-network
+      
+  microservice_m1:
+    build:
+      context: ./microservice_m1
+    ports:
+      - "3001:3001"
+    depends_on:
+      - rabbitmq
+    networks:
+      - loki-network
+
+  microservice_m2:
+    build:
+      context: ./microservice_m2
+    ports:
+      - "3002:3002"
+    depends_on:
+      - rabbitmq
+    networks:
+      - loki-network
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - ./loki-data:/loki
+    networks:
+      - loki-network
+
+  promtail:
+    image: grafana/promtail:latest
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    networks:
+      - loki-network
+
+networks:
+  loki-network:
+

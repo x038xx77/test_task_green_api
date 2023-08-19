@@ -1,0 +1,24 @@
+server:
+  http_listen_port: 9080
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push 
+
+scrape_configs:
+  - job_name: 'microservice_m1'
+    static_configs:
+      - targets: ['microservice_m1:3001'] 
+    labels:
+      job: 'microservice_m1'
+
+  - job_name: 'microservice_m2'
+    static_configs:
+      - targets: ['microservice_m2:3002']  
+    labels:
+      job: 'microservice_m2'
+
+  # - job_name: 'rabbitmq'
+  #   static_configs:
+  #     - targets: ['rabbitmq:15672']  
+  #   labels:
+  #     job: 'rabbitmq'
