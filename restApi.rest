@@ -1,8 +1,21 @@
 
-###
-POST http://0.0.0.0:3001/create-order HTTP/1.1
+GET https://lavrentev.tk HTTP/1.1
 content-type: application/json
 
+# curl -X POST -H "Content-Type: application/json" -d '{"order": "example"}' http://localhost:3001/create-order
+
+
+
+###
+POST http://127.0.0.1:3001/create-order HTTP/1.1
+content-type: application/json
+
+
 {
-    "order": "example"
+    "order": "test"
 }
+
+
+###
+GET http://127.0.0.1:3001/ HTTP/1.1
+
