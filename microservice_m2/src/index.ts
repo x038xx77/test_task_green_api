@@ -20,7 +20,7 @@ async function processOrders() {
       
       // Отправляем подтверждение в M1
       channel.sendToQueue(confirmationQueue, Buffer.from(confirmationNumber));
-      logger.info(`Order processed. Confirmation number: ${confirmationNumber} order Data M1 ${JSON.stringify(orderData)}`);
+      logger.info(`Order processed. Confirmation number: ${confirmationNumber} for order Data M1 ${JSON.stringify(orderData)}`);
       channel.ack(message);
     }
   });

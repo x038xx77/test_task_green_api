@@ -19,39 +19,20 @@ const opts: RouteShorthandOptions = {
   }
 };
 
-
 server.get('/test', opts, async (request, reply) => {
-  return { server_test: 'it worked!' }
-})
+  return { server_test: 'it worked!' };
+});
 
 const logger = pino({ level: 'info' });
 
-// Создаем подключение к RabbitMQ
-async function createRabbitMQConnection() {
-  const connection = await amqp.connect('amqp://localhost:5672');
-
+async function createChannelAndQueue(queueName: string) {
+  const connection = await amqp.connect('amqp://localhost:5672', { timeout: 5000 });
   const channel = await connection.createChannel();
-  const queue = 'orders';
 
-  await channel.assertQueue(queue, { durable: false }); 
+  await channel.assertQueue(queueName, { durable: false });
 
-  channel.consume(queue, (message: amqp.ConsumeMessage | null) => {
-    if (message !== null) {
-      const orderData = JSON.parse(message.content.toString());
-
-      // Обработка полученных данных из RabbitMQ
-      // В данном примере просто выводим информацию в консоль
-      // server.log.info('Received order from RabbitMQ:', orderData);
-      logger.info(`Received order from RabbitMQ: ${JSON.stringify(orderData)}`);
-      channel.ack(message);
-    }
-  });
+  return channel;
 }
-
-// Вызываем функцию создания подключения к RabbitMQ
-createRabbitMQConnection().catch((error) => {
-  console.error('Error creating RabbitMQ connection:', error);
-});
 
 const confirmationQueue = 'confirmations';
 
@@ -59,26 +40,20 @@ server.post('/create-order', async (request, reply) => {
   try {
     const orderData = request.body;
 
-    // Отправка данных заказа в RabbitMQ
-    const connection = await amqp.connect('amqp://localhost:5672');
-    const channel = await connection.createChannel();
-    
-    const queue = 'orders';
-    const confirmationQueue = 'confirmations'; // Новая очередь для подтверждений
-    
-    await channel.assertQueue(queue, { durable: false });
-    await channel.assertQueue(confirmationQueue, { durable: false }); // Объявляем новую очередь
+    const orderQueueName = 'orders';
+
+    const orderChannel = await createChannelAndQueue(orderQueueName);
+    const confirmationChannel = await createChannelAndQueue(confirmationQueue);
 
     // Отправляем заказ
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(orderData)));
+    orderChannel.sendToQueue(orderQueueName, Buffer.from(JSON.stringify(orderData)));
 
     // Принимаем подтверждение от M2
-    channel.consume(confirmationQueue, (message) => {
+    confirmationChannel.consume(confirmationQueue, (message) => {
       if (message !== null) {
         const confirmationMessage = message.content.toString();
         logger.info(`Received confirmation from M2: ${confirmationMessage}`);
-        channel.ack(message);
-        
+        confirmationChannel.ack(message);
       }
     });
 
@@ -91,15 +66,13 @@ server.post('/create-order', async (request, reply) => {
 
 const start = async () => {
   try {
-    await server.listen({ port: 3001  });
+    await server.listen({ port: 3001 });
 
     const address = server.server.address();
     const port = typeof address === 'string' ? address : address?.port;
     console.log(`Server listening on port http://localhost:${port}`);
   } catch (error) {
-    // server.log.error(error);
     logger.error(error);
-    
     process.exit(1);
   }
 };

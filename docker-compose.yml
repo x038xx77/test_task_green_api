@@ -10,28 +10,6 @@ services:
     networks:
       - loki-network   
       
-  # microservice_m1:
-  #   build:
-  #     context: ./microservice_m1
-  #   ports:
-  #     - "3001:3001"
-     
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - loki-network
-  #   command: sh -c "sleep 10 && node dist/index.js"
-
-  # microservice_m2:
-  #   build:
-  #     context: ./microservice_m2
-  #   ports:
-  #     - "3002:3002"
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - loki-network
-  #   command: sh -c "sleep 10 && node dist/index.js"
 
   loki:
     image: grafana/loki:latest
